@@ -1,0 +1,3 @@
+username,password,expected_message
+tomsmith,SuperSecretPassword!,You logged into a secure area!
+wronguser,wrongpass,Your username is invalid!
