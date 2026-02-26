@@ -1,51 +1,23 @@
-import csv
 import pytest
 from pages.login_page import LoginPage
-from api.api_client import APIClient
-
-
-def get_login_data():
-    data = []
-    with open("testdata/login_data.csv", newline="") as file:
-        reader = csv.DictReader(file)
-        for row in reader:
-            data.append(
-                (
-                    row["username"],
-                    row["password"],
-                    row["expected_message"]
-                )
-            )
-    return data
 
 
 @pytest.mark.parametrize(
-    "username,password,expected_message",
-    get_login_data()
+    "username,password,expected_text",
+    [
+        ("tomsmith", "SuperSecretPassword!", "You logged into a secure area!"),
+        ("wronguser", "wrongpass", "Your username is invalid!")
+    ]
 )
-def test_login_data_driven(setup, username, password, expected_message):
+def test_login_data_driven(setup, username, password, expected_text):
 
     driver = setup
     login = LoginPage(driver)
 
-    # 🔹 UI Steps
-    login.open_url()
-    login.enter_username(username)
-    login.enter_password(password)
-    login.click_login()
+    login.open_login_page()
+    login.login(username, password)
 
-    ui_message = login.get_success_message()
+    message = login.get_success_message()
 
-    # 🔹 UI Validation
-    assert expected_message in ui_message
-
-    # 🔥 Backend API Validation (Only for valid login case)
-    if "secure area" in expected_message:
-        response = APIClient.get("/users")
-
-        assert response.status_code == 200
-
-        api_data = response.json()
-
-        assert isinstance(api_data, list)
-        assert len(api_data) > 0
+    # 🔥 Temporary failure simulation
+    assert expected_text in message

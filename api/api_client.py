@@ -16,3 +16,12 @@ class APIClient:
         url = f"{APIClient.BASE_URL}{endpoint}"
         response = requests.post(url, json=payload, headers=headers)
         return response
+
+    @staticmethod
+    def get_with_token(endpoint, token):
+        url = f"{APIClient.BASE_URL}{endpoint}"
+        headers = {
+            "Authorization": f"Bearer {token}"
+        }
+        response = requests.get(url, headers=headers)
+        return response

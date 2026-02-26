@@ -4,28 +4,34 @@ from datetime import datetime
 from utils.driver_factory import DriverFactory
 
 
+def pytest_addoption(parser):
+    parser.addoption(
+        "--headless",
+        action="store_true",
+        help="Run browser in headless mode"
+    )
+
+
 @pytest.fixture(scope="function")
-def setup():
-    driver = DriverFactory.get_driver()
+def setup(request):
+    headless = request.config.getoption("--headless")
+    driver = DriverFactory.get_driver(headless=headless)
+    request.node.driver = driver
     yield driver
     driver.quit()
 
 
-# Hook to capture screenshot on failure
 @pytest.hookimpl(hookwrapper=True)
 def pytest_runtest_makereport(item, call):
     outcome = yield
     report = outcome.get_result()
 
     if report.when == "call" and report.failed:
-        driver = item.funcargs.get("setup")
+        driver = getattr(item, "driver", None)
         if driver:
-            screenshots_dir = "reports/screenshots"
-            os.makedirs(screenshots_dir, exist_ok=True)
+            if not os.path.exists("reports/screenshots"):
+                os.makedirs("reports/screenshots")
 
             timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-            screenshot_name = f"{item.name}_{timestamp}.png"
-            screenshot_path = os.path.join(screenshots_dir, screenshot_name)
-
+            screenshot_path = f"reports/screenshots/{item.name}_{timestamp}.png"
             driver.save_screenshot(screenshot_path)
-            print(f"\nScreenshot saved at: {screenshot_path}")
